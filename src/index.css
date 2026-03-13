@@ -15,6 +15,37 @@
   }
 }
 
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  .resume-page {
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
+  /* Hide non-printable elements */
+  button, .no-print {
+    display: none !important;
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.animate-scan {
+  animation: scan 8s linear infinite;
+}
+
 .page-break {
   page-break-after: always;
 }

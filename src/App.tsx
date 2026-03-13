@@ -61,7 +61,7 @@ const PageWrapper = ({ children, className }: { children: React.ReactNode, class
 );
 
 const EditorialHeader = ({ title, subtitle, number }: { title: string, subtitle?: string, number: string }) => (
-  <div className="mb-12 relative">
+  <div className="mb-8 relative">
     <div className="absolute -top-8 -left-4 text-[120px] font-display text-white/5 leading-none select-none">
       {number}
     </div>
@@ -361,38 +361,72 @@ export default function App() {
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed top-6 right-6 z-50 flex gap-4"
+        className="fixed top-6 right-6 z-50 flex flex-col items-end gap-3"
       >
-        <button
-          onClick={resetAssets}
-          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-full font-bold transition-all backdrop-blur-md border border-white/10 cursor-pointer"
-        >
-          Reset Images
-        </button>
-        <button
-          onClick={downloadPDF}
-          disabled={isDownloading}
-          className="flex items-center gap-2 bg-film-gold hover:scale-105 active:scale-95 text-black px-8 py-4 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(201,168,79,0.4)] disabled:opacity-50 cursor-pointer"
-        >
-          {isDownloading ? (
-            <span className="animate-pulse flex items-center gap-2">
-              <Zap size={18} className="animate-bounce" />
-              Processing...
-            </span>
-          ) : (
-            <>
-              <Download size={20} />
-              Export Portfolio
-            </>
-          )}
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={resetAssets}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-full font-bold transition-all backdrop-blur-md border border-white/10 cursor-pointer"
+          >
+            Reset Images
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-full font-bold transition-all backdrop-blur-md border border-white/10 cursor-pointer"
+          >
+            Print Portfolio
+          </button>
+          <button
+            onClick={downloadPDF}
+            disabled={isDownloading}
+            className="flex items-center gap-2 bg-film-gold hover:scale-105 active:scale-95 text-black px-8 py-4 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(201,168,79,0.4)] disabled:opacity-50 cursor-pointer"
+          >
+            {isDownloading ? (
+              <span className="animate-pulse flex items-center gap-2">
+                <Zap size={18} className="animate-bounce" />
+                Processing...
+              </span>
+            ) : (
+              <>
+                <Download size={20} />
+                Export PDF
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold mr-4">
+          Optimized for A4 Print & Digital Distribution
+        </p>
       </motion.div>
 
       {/* Resume Container */}
       <div ref={resumeRef} className="flex flex-col gap-16">
         
         {/* PAGE 1: THE COVER / IDENTITY */}
-        <PageWrapper>
+        <PageWrapper className="group/page">
+          {/* Cinematic Film Frame Elements */}
+          <div className="absolute inset-0 z-20 pointer-events-none border-[1px] border-white/10 m-4 rounded-sm" />
+          <div className="absolute inset-x-0 top-0 z-20 pointer-events-none flex justify-between px-8 py-2 opacity-20">
+            <div className="flex gap-4 items-center">
+              <div className="w-1 h-1 bg-white rounded-full" />
+              <p className="text-[8px] font-mono tracking-widest uppercase">REC • 00:00:00:00</p>
+            </div>
+            <p className="text-[8px] font-mono tracking-widest uppercase">24 FPS • 8K RAW</p>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none flex justify-between px-8 py-2 opacity-20">
+            <p className="text-[8px] font-mono tracking-widest uppercase">ISO 800 • 5600K</p>
+            <div className="flex gap-4 items-center">
+              <p className="text-[8px] font-mono tracking-widest uppercase">STBY • 100%</p>
+              <div className="w-1 h-1 bg-white rounded-full" />
+            </div>
+          </div>
+          
+          {/* Corner Crop Marks */}
+          <div className="absolute top-8 left-8 w-8 h-8 border-t border-l border-white/20 z-20 pointer-events-none" />
+          <div className="absolute top-8 right-8 w-8 h-8 border-t border-r border-white/20 z-20 pointer-events-none" />
+          <div className="absolute bottom-8 left-8 w-8 h-8 border-b border-l border-white/20 z-20 pointer-events-none" />
+          <div className="absolute bottom-8 right-8 w-8 h-8 border-b border-r border-white/20 z-20 pointer-events-none" />
+
           <div className="absolute inset-0">
             <EditableImage 
               data={assets.cover} 
@@ -400,17 +434,18 @@ export default function App() {
               className="w-full h-full"
               alt="Cover Image"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-cinematic-black via-cinematic-black/40 to-transparent pointer-events-none" />
-            <div className="absolute inset-0 bg-cinematic-black/30 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-cinematic-black via-cinematic-black/60 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-cinematic-black/40 pointer-events-none" />
           </div>
 
           <div className="relative z-10 flex flex-col h-full p-20 pointer-events-none">
             <div className="flex justify-between items-start">
-              <div className="bg-film-gold text-black px-4 py-1 font-display text-xl tracking-widest uppercase pointer-events-auto">
+              <div className="bg-film-gold text-black px-6 py-2 font-display text-xl tracking-[0.3em] uppercase pointer-events-auto shadow-[0_0_20px_rgba(201,168,79,0.3)]">
                 Portfolio Resume
               </div>
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-[0.5em] opacity-60">Est. 2010</p>
+                <p className="text-[10px] uppercase tracking-[0.6em] text-film-gold font-bold">Cameron Johnson</p>
+                <p className="text-[8px] uppercase tracking-[0.5em] opacity-40 mt-1">Visual Production Lead</p>
               </div>
             </div>
 
@@ -420,14 +455,20 @@ export default function App() {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <p className="text-film-gold font-display text-3xl tracking-[0.4em] uppercase mb-2">Director of Photography</p>
-                <h1 className="text-[140px] font-display leading-[0.8] tracking-tighter mb-12 uppercase">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-[1px] w-12 bg-film-gold" />
+                  <p className="text-film-gold font-display text-2xl tracking-[0.5em] uppercase">Director of Photography</p>
+                </div>
+                <h1 className="text-[150px] font-display leading-[0.75] tracking-tighter mb-12 uppercase">
                   Cameron<br />
-                  <span className="text-white/20 outline-text">Johnson</span>
+                  <span className="text-white/10 outline-text-heavy">Johnson</span>
                 </h1>
+                <p className="text-xl font-light tracking-[0.2em] text-white/60 max-w-xl leading-relaxed uppercase">
+                  Crafting cinematic narratives through <span className="text-white">light, motion, and visual architecture</span>.
+                </p>
               </motion.div>
               
-              <div className="grid grid-cols-3 gap-12 border-t border-white/10 pt-12">
+              <div className="grid grid-cols-3 gap-12 border-t border-white/10 mt-16 pt-12">
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase tracking-widest text-film-gold font-bold mb-2">Location</span>
                   <span className="text-xl font-light">Cincinnati, OH</span>
@@ -473,6 +514,10 @@ export default function App() {
           <style dangerouslySetInnerHTML={{ __html: `
             .outline-text {
               -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+              color: transparent;
+            }
+            .outline-text-heavy {
+              -webkit-text-stroke: 2px rgba(255,255,255,0.1);
               color: transparent;
             }
           `}} />
@@ -627,65 +672,107 @@ export default function App() {
 
         {/* PAGE 4: TECHNICAL TOOLKIT & ACHIEVEMENTS */}
         <PageWrapper>
-          <div className="flex flex-col h-full bg-[#0a0a0a]">
-            <div className="p-20 pb-10">
+          <div className="flex flex-col h-full bg-[#0a0a0a] relative">
+            {/* Background Texture */}
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+                 style={{ backgroundImage: 'radial-gradient(#C9A84F 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+            
+            <div className="p-16 pb-8 relative z-10">
               <EditorialHeader title="Technical" subtitle="Toolkit & Industry Recognition" number="03" />
             </div>
 
-            <div className="px-20 grid grid-cols-12 gap-12 flex-1 pb-12">
+            <div className="px-16 grid grid-cols-12 gap-8 flex-1 pb-10 relative z-10">
               {/* Left Side: The Hardware Dashboard */}
               <div className="col-span-7 flex flex-col gap-8">
-                <div className="bg-[#151619] rounded-[40px] p-12 border border-white/5 shadow-2xl relative overflow-hidden flex-1">
+                <div className="bg-[#111215] rounded-[40px] p-10 border border-white/5 shadow-2xl relative overflow-hidden flex-1 flex flex-col">
+                  {/* Decorative Elements */}
                   <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
                     <Monitor size={240} />
                   </div>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-film-gold/20 to-transparent" />
                   
-                  <div className="flex items-center gap-4 mb-12">
-                    <div className="w-2 h-2 rounded-full bg-film-gold animate-pulse" />
-                    <h4 className="text-xs font-mono uppercase tracking-[0.4em] text-film-gold">System Configuration</h4>
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-2 h-2 rounded-full bg-film-gold shadow-[0_0_10px_rgba(201,168,79,0.8)]" />
+                      <h4 className="text-xs font-mono uppercase tracking-[0.4em] text-film-gold">Technical Proficiencies</h4>
+                    </div>
+                    <div className="text-[8px] font-mono text-white/20 uppercase tracking-widest">Active Status: Optimal</div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-12 gap-y-16">
-                    <div className="space-y-4">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">01. Cinema Systems</p>
-                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
-                        <li>RED Komodo X [6K]</li>
-                        <li>ARRI Alexa Mini LF</li>
-                        <li>Sony FX9 / FX6</li>
-                        <li>DJI Inspire 3 [8K]</li>
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-8 flex-1">
+                    <div className="space-y-4 group">
+                      <div className="flex items-center gap-3 border-b border-white/10 pb-2">
+                        <Camera size={14} className="text-film-gold/50" />
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">01. Camera Systems</p>
+                      </div>
+                      <ul className="text-[11px] font-light space-y-2 opacity-80 leading-relaxed">
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> RED Komodo X / V-RAPTOR XL</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> ARRI Alexa Mini LF / Alexa 35</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Sony A7SIII / FX9 / FX6 / FX3</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Canon C500 Mk II</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> DJI Inspire 3 / Mavic 3 Cine</li>
                       </ul>
                     </div>
 
-                    <div className="space-y-4">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">02. Optics & Light</p>
-                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
-                        <li>Steadicam / RS4 Pro</li>
-                        <li>Teradek Bolt 6</li>
-                        <li>Aputure 600D / 300D</li>
-                        <li>Nanlite Forza Series</li>
+                    <div className="space-y-4 group">
+                      <div className="flex items-center gap-3 border-b border-white/10 pb-2">
+                        <Zap size={14} className="text-film-gold/50" />
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">02. Camera Support</p>
+                      </div>
+                      <ul className="text-[11px] font-light space-y-2 opacity-80 leading-relaxed">
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Steadicam systems</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> DJI RS4 Pro gimbal</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> EasyRig Vario 5</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Tilta Nucleus-M wireless focus</li>
+                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Teradek Bolt 6 / SmallHD Ultra</li>
                       </ul>
                     </div>
 
-                    <div className="space-y-4">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">03. Post Pipeline</p>
-                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
-                        <li>DaVinci Resolve [Color]</li>
-                        <li>Premiere Pro [Edit]</li>
-                        <li>After Effects [VFX]</li>
-                        <li>Blender [3D]</li>
-                      </ul>
+                    <div className="col-span-2 space-y-4 group">
+                      <div className="flex items-center gap-3 border-b border-white/10 pb-2">
+                        <Layers size={14} className="text-film-gold/50" />
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">03. Lighting & Tabletop Architecture</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-8">
+                        <ul className="text-[11px] font-light space-y-2 opacity-80 leading-relaxed">
+                          <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Aputure 600D / 300D series</li>
+                          <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Nanlite Forza series</li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-1 h-1 bg-film-gold/30 rounded-full mt-1.5 shrink-0" /> 
+                            <span>High-speed tabletop lighting for product, beauty, and lifestyle</span>
+                          </li>
+                        </ul>
+                        <ul className="text-[11px] font-light space-y-2 opacity-80 leading-relaxed">
+                          <li className="flex items-start gap-2">
+                            <div className="w-1 h-1 bg-film-gold/30 rounded-full mt-1.5 shrink-0" /> 
+                            <span>Custom tabletop rigs for liquids, reflective packaging, and textiles</span>
+                          </li>
+                          <li className="flex items-center gap-2"><div className="w-1 h-1 bg-film-gold/30 rounded-full" /> Precision light shaping & texture control</li>
+                        </ul>
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">04. Education</p>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-tight">Art Academy of Cincinnati</p>
-                          <p className="text-[9px] opacity-40 uppercase">Digital Media Studies</p>
+                    <div className="col-span-2 space-y-3 group">
+                      <div className="flex items-center gap-3 border-b border-white/10 pb-2">
+                        <Award size={14} className="text-film-gold/50" />
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">04. Education</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <div className="relative pl-4 border-l border-film-gold/20">
+                            <p className="text-xs font-bold uppercase tracking-tight">University of Cincinnati</p>
+                            <p className="text-[9px] opacity-40 uppercase tracking-widest mt-1">Audio Video Production</p>
+                          </div>
+                          <div className="relative pl-4 border-l border-film-gold/20">
+                            <p className="text-xs font-bold uppercase tracking-tight">Art Academy of Cincinnati</p>
+                            <p className="text-[9px] opacity-40 uppercase tracking-widest mt-1">Digital Media Studies</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-tight">University of Cincinnati</p>
-                          <p className="text-[9px] opacity-40 uppercase">Digital Media & Production</p>
+                        <div className="space-y-3">
+                          <div className="relative pl-4 border-l border-film-gold/20">
+                            <p className="text-xs font-bold uppercase tracking-tight">School for Creative & Performing Arts — Cincinnati, OH</p>
+                            <p className="text-[9px] opacity-40 uppercase tracking-widest mt-1">Fine Arts, Digital Art, Color Theory, Art History</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -695,34 +782,47 @@ export default function App() {
 
               {/* Right Side: Achievements & Visual */}
               <div className="col-span-5 flex flex-col gap-8">
-                <div className="flex-1 relative rounded-[40px] overflow-hidden border border-white/10 group">
+                <div className="flex-1 relative rounded-[40px] overflow-hidden border border-white/10 group shadow-2xl">
                   <EditableImage 
                     data={assets.project1} 
                     onUpdate={(updates) => updateAsset('project1', updates)}
                     className="w-full h-full"
                     label="Portfolio Highlight"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-10">
-                    <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-2">Technical Execution</p>
-                    <h4 className="text-2xl font-display uppercase tracking-tighter text-white">Steadicam Operation | RED Komodo X</h4>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-[1px] w-8 bg-film-gold" />
+                      <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em]">Technical Execution</p>
+                    </div>
+                    <h4 className="text-2xl font-display uppercase tracking-tighter text-white leading-tight">Steadicam Operation<br />RED Komodo X</h4>
                   </div>
                 </div>
 
-                <div className="bg-white/5 rounded-[32px] p-8 border border-white/10">
-                  <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-film-gold mb-6 flex items-center gap-3">
-                    <Award size={14} /> Recognition
+                <div className="bg-[#151619] rounded-[32px] p-10 border border-white/5 shadow-xl relative overflow-hidden">
+                  <div className="absolute -top-4 -right-4 opacity-[0.05]">
+                    <Award size={100} className="text-film-gold" />
+                  </div>
+                  
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.5em] text-film-gold mb-8 flex items-center gap-3 relative z-10">
+                    <Award size={14} /> Industry Recognition
                   </h4>
-                  <div className="space-y-4">
+                  <div className="space-y-6 relative z-10">
                     {[
-                      { title: "Best iPhone Film", org: "UPAA Winner" },
-                      { title: "Hoodtorial University", org: "25K Platform" },
-                      { title: "Music Walk of Fame", org: "Archived (CPL)" }
+                      { title: "Best iPhone Film", org: "UPAA Winner", year: "2025" },
+                      { title: "Hoodtorial University", org: "25K Online Platform", year: "2025" },
+                      { title: "Music Walk of Fame", org: "25K Platform Archived by the Cincinnati Public Library", year: "2025" },
+                      { title: "Founded Solo Films", org: "Nationally active production company across LA, ATL, NYC, Chicago, Miami & Cincinnati.", year: "2010" }
                     ].map((item, i) => (
-                      <div key={i} className="flex justify-between items-center group cursor-default">
-                        <span className="text-xs font-medium uppercase tracking-tight group-hover:text-film-gold transition-colors">{item.title}</span>
-                        <div className="h-[1px] flex-1 mx-4 bg-white/5" />
-                        <span className="text-[9px] opacity-30 uppercase font-mono">{item.org}</span>
+                      <div key={i} className="flex flex-col gap-1 group cursor-default">
+                        <div className="flex justify-between items-end">
+                          <span className="text-sm font-bold uppercase tracking-tight group-hover:text-film-gold transition-colors duration-300">{item.title}</span>
+                          <span className="text-[8px] font-mono text-film-gold/40">{item.year}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-[1px] w-4 bg-white/10" />
+                          <span className="text-[9px] opacity-30 uppercase tracking-widest font-mono">{item.org}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -730,11 +830,11 @@ export default function App() {
               </div>
             </div>
 
-            <div className="mt-auto py-10 px-20 border-t border-white/5 flex justify-between items-center">
+            <div className="mt-auto py-8 px-16 border-t border-white/5 flex justify-between items-center relative z-10">
               <div className="flex items-center gap-8">
                 <div className="flex items-center gap-3 opacity-40">
-                  <Instagram size={14} />
-                  <span className="text-[10px] tracking-[0.4em] uppercase font-bold">@Bangoutfilms</span>
+                  <Globe size={14} />
+                  <span className="text-[10px] tracking-[0.4em] uppercase font-bold">solofilmsofficial.com</span>
                 </div>
                 <div className="h-4 w-[1px] bg-white/10" />
                 <p className="text-[10px] tracking-[0.4em] uppercase text-white/20 font-bold">Technical Specs | Section 03</p>
