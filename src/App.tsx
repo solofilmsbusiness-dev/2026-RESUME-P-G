@@ -749,11 +749,18 @@ export default function App() {
         {/* PAGE 5: CINEMATIC GALLERY */}
         <PageWrapper>
           <div className="flex flex-col h-full bg-[#080808] overflow-hidden">
-            <div className="px-20 pt-16 pb-8 flex justify-between items-end">
+            <div className="px-20 pt-16 pb-4 flex justify-between items-end">
               <EditorialHeader title="Gallery" subtitle="Visual Narrative & Frame Studies" number="04" />
               <div className="text-right pb-2">
                 <p className="text-[10px] tracking-[0.6em] uppercase text-film-gold font-bold">Frame Studies</p>
                 <p className="text-[8px] tracking-widest uppercase opacity-30 mt-1">Cinematic Composition</p>
+              </div>
+            </div>
+
+            <div className="px-20 mb-6">
+              <div className="flex items-center gap-8">
+                <div className="h-[1px] w-24 bg-film-gold" />
+                <p className="text-sm font-bold uppercase tracking-[0.4em] text-white/40">Cinematic Frame Study</p>
               </div>
             </div>
 
@@ -769,18 +776,18 @@ export default function App() {
                     label="Hero Frame Study"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute bottom-0 left-0 right-0 p-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="bg-film-gold text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Lead Narrative</span>
-                      <div className="h-[1px] w-12 bg-white/30" />
+                  <div className="absolute bottom-0 left-0 right-0 p-12 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="h-[1px] w-12 bg-film-gold" />
+                      <p className="text-xs font-bold uppercase tracking-[0.4em] text-film-gold">Lead Narrative Study</p>
                     </div>
-                    <h4 className="text-4xl font-display uppercase tracking-tighter text-white">Olay Beauty</h4>
-                    <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.5em] mt-2">Product Cinematography • Texture • Form</p>
+                    <h4 className="text-5xl font-display uppercase tracking-tighter text-white leading-none">Olay Beauty</h4>
+                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.6em] mt-4">Cinematic Texture • Lighting Architecture</p>
                   </div>
                 </div>
                 <div className="px-10 text-center">
-                  <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-1">OLAY — SPEC CAMPAIGN</p>
-                  <p className="text-[9px] font-light leading-relaxed opacity-60 max-w-xl mx-auto">
+                  <p className="text-sm font-bold uppercase tracking-[0.4em] text-film-gold mb-2">Olay — Cinematic Study</p>
+                  <p className="text-[10px] font-light leading-relaxed opacity-60 max-w-xl mx-auto uppercase tracking-widest">
                     Beauty & personal care product cinematography. Controlled ambient lighting highlighting product texture, color, and form.
                   </p>
                 </div>
@@ -797,6 +804,14 @@ export default function App() {
                       className="w-full h-full"
                       label="Swine City Brewing Co."
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="h-[1px] w-8 bg-film-gold" />
+                        <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-film-gold">Lifestyle</p>
+                      </div>
+                      <h4 className="text-xl font-display uppercase tracking-tighter text-white leading-none">Swine City</h4>
+                    </div>
                   </div>
                   <div className="px-1">
                     <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Swine City Brewing Co.</p>
@@ -815,6 +830,14 @@ export default function App() {
                       className="w-full h-full"
                       label="Urban League × P&G"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="h-[1px] w-8 bg-film-gold" />
+                        <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-film-gold">Community</p>
+                      </div>
+                      <h4 className="text-xl font-display uppercase tracking-tighter text-white leading-none">Urban League</h4>
+                    </div>
                   </div>
                   <div className="px-1">
                     <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Urban League × P&G</p>
@@ -833,29 +856,45 @@ export default function App() {
                       className="w-full h-full"
                       label="Black Music Walk of Fame"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="h-[1px] w-8 bg-film-gold" />
+                        <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-film-gold">Documentary</p>
+                      </div>
+                      <h4 className="text-xl font-display uppercase tracking-tighter text-white leading-none">Walk of Fame</h4>
+                    </div>
                   </div>
                   <div className="px-1">
                     <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Cincinnati Black Music Walk of Fame Documentary</p>
                     <p className="text-[8px] font-light leading-tight opacity-60">
-                      Feat. Damon Jones, Chief Marketing Officer, Procter & Gamble • Directed by Cameron Johnson Archived by the Cincinnati Public Library.
+                      Feat. Damon Jones | Directed by Cameron Johnson • Archived by the Cincinnati Public Library
                     </p>
                   </div>
                 </div>
 
-                {/* Febreze Auto */}
+                {/* Swiffer Spec Commercial */}
                 <div className="space-y-2">
                   <div className="relative rounded-2xl overflow-hidden border border-white/5 shadow-xl group aspect-video">
                     <EditableImage 
                       data={assets.gallery5} 
                       onUpdate={(updates) => updateAsset('gallery5', updates)}
                       className="w-full h-full"
-                      label="Febreze Auto | Spec Commercial"
+                      label="Swiffer | Spec Commercial"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="h-[1px] w-8 bg-film-gold" />
+                        <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-film-gold">Spec Campaign</p>
+                      </div>
+                      <h4 className="text-xl font-display uppercase tracking-tighter text-white leading-none">Swiffer Spec</h4>
+                    </div>
                   </div>
                   <div className="px-1">
-                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Febreze Auto — Spec Commercial</p>
+                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Urban League × P&G — Swiffer Spec Commercial</p>
                     <p className="text-[8px] font-light leading-tight opacity-60">
-                      In-vehicle cinematography using practical ambient lighting — dashboard glow, mixed color temperatures — for a cinematic product moment.
+                      Product cinematography for the Urban League and P&G collaboration. Highlighting texture and form through controlled studio lighting.
                     </p>
                   </div>
                 </div>
