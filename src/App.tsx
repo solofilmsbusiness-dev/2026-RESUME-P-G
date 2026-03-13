@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import * as React from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { 
   Download, 
   Mail, 
@@ -16,17 +17,129 @@ import {
   Zap,
   ExternalLink,
   Menu,
-  Printer
+  Printer,
+  LogIn,
+  LogOut,
+  AlertCircle
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { auth, db } from './firebase';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut,
+  User
+} from 'firebase/auth';
+import { 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  getDocFromServer,
+  Timestamp,
+  collection,
+  query
+} from 'firebase/firestore';
 
 // Utility for tailwind classes
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+class ErrorBoundary extends React.Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    (this as any).state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    const { hasError, error } = (this as any).state;
+    if (hasError) {
+      let message = "Something went wrong.";
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed.error && parsed.error.includes('insufficient permissions')) {
+          message = "You don't have permission to perform this action. Please make sure you are logged in.";
+        }
+      } catch (e) {}
+
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center p-8 text-center">
+          <div className="max-w-md bg-white/5 border border-white/10 p-8 rounded-2xl backdrop-blur-xl">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Application Error</h2>
+            <p className="text-white/60 text-sm mb-6">{message}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-film-gold text-black px-6 py-2 rounded-full font-bold uppercase text-xs tracking-widest"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (this as any).props.children;
+  }
 }
 
 interface AssetData {
@@ -271,47 +384,129 @@ const EditableImage = ({
 };
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+}
+
+function AppContent() {
   const resumeRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  
-  // Initialize assets from localStorage if available
-  const [assets, setAssets] = useState(() => {
-    const saved = localStorage.getItem('portfolio_assets');
-    if (!saved) return ASSETS_INITIAL;
-    
-    try {
-      const parsed = JSON.parse(saved);
-      // Migration: If any asset is just a string, wrap it in the new object structure
-      const migrated = { ...ASSETS_INITIAL };
-      Object.keys(parsed).forEach(key => {
-        if (typeof parsed[key] === 'string') {
-          migrated[key] = { src: parsed[key], zoom: 1, position: { x: 0, y: 0 } };
-        } else {
-          migrated[key] = parsed[key];
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [assets, setAssets] = useState<Record<string, AssetData>>(ASSETS_INITIAL);
+
+  // Connection Test
+  useEffect(() => {
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration.");
         }
-      });
-      return migrated;
-    } catch (e) {
-      return ASSETS_INITIAL;
+      }
     }
-  });
+    testConnection();
+  }, []);
 
-  // Persist assets to localStorage whenever they change
-  React.useEffect(() => {
-    localStorage.setItem('portfolio_assets', JSON.stringify(assets));
-  }, [assets]);
+  // Auth Listener
+  useEffect(() => {
+    return onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setIsAuthReady(true);
+    });
+  }, []);
 
-  const updateAsset = (key: string, updates: Partial<AssetData>) => {
-    setAssets(prev => ({ 
-      ...prev, 
-      [key]: { ...prev[key], ...updates } 
-    }));
+  // Firestore Sync
+  useEffect(() => {
+    if (!user) {
+      setAssets(ASSETS_INITIAL);
+      return;
+    }
+
+    const assetsPath = `portfolios/${user.uid}/assets`;
+    const q = query(collection(db, assetsPath));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const remoteAssets: Record<string, AssetData> = { ...ASSETS_INITIAL };
+        snapshot.forEach((doc) => {
+          remoteAssets[doc.id] = doc.data() as AssetData;
+        });
+        setAssets(remoteAssets);
+      } else {
+        // If no assets exist yet, we don't need to do anything, 
+        // the local state is already ASSETS_INITIAL
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, assetsPath);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
-  const resetAssets = () => {
-    if (window.confirm('Are you sure you want to reset all images to placeholders?')) {
-      setAssets(ASSETS_INITIAL);
-      localStorage.removeItem('portfolio_assets');
+  const logout = () => signOut(auth);
+
+  const updateAsset = async (key: string, updates: Partial<AssetData>) => {
+    if (!user) return;
+
+    const currentAsset = assets[key] || ASSETS_INITIAL[key];
+    const updatedAsset = { ...currentAsset, ...updates };
+    
+    // Update local state immediately for responsiveness
+    setAssets(prev => ({
+      ...prev,
+      [key]: updatedAsset
+    }));
+
+    const path = `portfolios/${user.uid}/assets/${key}`;
+    setIsSaving(true);
+    try {
+      await setDoc(doc(db, path), {
+        ...updatedAsset,
+        updatedAt: Timestamp.now()
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const resetAssets = async () => {
+    if (!user) return;
+    if (confirm('Are you sure you want to reset all images to placeholders?')) {
+      setIsSaving(true);
+      try {
+        // We'll just update the local state and let the user re-upload if they want.
+        // Or we could delete the docs, but overwriting is easier.
+        const batchPromises = Object.keys(ASSETS_INITIAL).map(key => {
+          const path = `portfolios/${user.uid}/assets/${key}`;
+          return setDoc(doc(db, path), {
+            ...ASSETS_INITIAL[key],
+            updatedAt: Timestamp.now()
+          });
+        });
+        await Promise.all(batchPromises);
+        setAssets(ASSETS_INITIAL);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `portfolios/${user.uid}/assets`);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -331,7 +526,6 @@ export default function App() {
           logging: false,
           backgroundColor: '#0B0B0B',
           onclone: (clonedDoc) => {
-            // Ensure transforms are preserved in the clone
             const clonedPages = clonedDoc.querySelectorAll('.resume-page');
             const targetPage = clonedPages[i] as HTMLElement;
             if (targetPage) {
@@ -351,13 +545,113 @@ export default function App() {
       pdf.save('Cameron_Johnson_Cinematic_Portfolio.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsDownloading(false);
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] py-12 px-4 flex flex-col items-center font-sans text-white/90 selection:bg-film-gold selection:text-black">
+      {/* Auth Overlay */}
+      <AnimatePresence>
+        {!user && isAuthReady && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6"
+          >
+            <div className="max-w-md w-full text-center">
+              <div className="w-20 h-20 bg-film-gold/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-film-gold/20 shadow-[0_0_50px_rgba(201,168,79,0.1)]">
+                <Film className="w-10 h-10 text-film-gold" />
+              </div>
+              <h1 className="text-4xl font-display uppercase tracking-tight text-white mb-4">Cinematic Portfolio</h1>
+              <p className="text-white/60 mb-10 leading-relaxed">
+                To save your custom images and ensure your portfolio persists across all devices, please sign in with your Google account.
+              </p>
+              <button 
+                onClick={login}
+                className="w-full bg-film-gold text-black py-4 rounded-full font-bold uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(201,168,79,0.3)] hover:shadow-[0_0_50px_rgba(201,168,79,0.5)] transition-all duration-500 flex items-center justify-center gap-3 group"
+              >
+                <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Sign in with Google
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header Controls */}
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="w-full max-w-[210mm] mb-8 flex justify-between items-center px-4"
+      >
+        <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <h2 className="text-film-gold font-display text-lg tracking-[0.2em] uppercase">Export Controls</h2>
+            <AnimatePresence>
+              {isSaving && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex items-center gap-2 px-2 py-0.5 bg-film-gold/10 border border-film-gold/20 rounded text-[8px] font-bold uppercase tracking-widest text-film-gold"
+                >
+                  <div className="w-1.5 h-1.5 bg-film-gold rounded-full animate-pulse" />
+                  Saving...
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Optimized for A4 Print & Digital Distribution</p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {user && (
+            <button 
+              onClick={logout}
+              className="p-3 text-white/40 hover:text-white transition-colors"
+              title="Sign Out"
+            >
+              <LogOut size={18} />
+            </button>
+          )}
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors px-4 py-2 rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest"
+          >
+            <Printer size={14} />
+            Print
+          </button>
+          <button
+            onClick={downloadPDF}
+            disabled={isDownloading}
+            className={cn(
+              "flex items-center gap-3 bg-film-gold hover:scale-105 active:scale-95 text-black px-10 py-5 rounded-full font-bold uppercase text-xs tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(201,168,79,0.4)] disabled:opacity-50 cursor-pointer",
+              isDownloading && "animate-pulse"
+            )}
+          >
+            {isDownloading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Download size={18} />
+                Download PDF
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+
       {/* Resume Container */}
       <div ref={resumeRef} className="flex flex-col gap-16">
         
@@ -397,7 +691,7 @@ export default function App() {
             <div className="absolute inset-0 bg-cinematic-black/40 pointer-events-none" />
           </div>
 
-          <div className="relative z-10 flex flex-col h-full p-20 pointer-events-none">
+          <div className="absolute inset-0 z-10 flex flex-col p-20 pointer-events-none">
             <div className="flex justify-between items-start">
               <div className="bg-film-gold text-black px-6 py-2 font-display text-xl tracking-[0.3em] uppercase pointer-events-auto shadow-[0_0_20px_rgba(201,168,79,0.3)]">
                 Portfolio Resume
@@ -748,8 +1042,8 @@ export default function App() {
                     className="w-full h-full"
                     label="Portfolio Highlight"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-10">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 p-10 pointer-events-none">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="h-[1px] w-8 bg-film-gold" />
                       <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em]">Technical Execution</p>
@@ -1041,6 +1335,27 @@ export default function App() {
           Director of Photography | Cinematographer | Visual Production Lead
         </p>
       </div>
+      {/* Floating Action Button */}
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="fixed bottom-8 right-8 z-[100] flex flex-col gap-4 no-print"
+      >
+        <button
+          onClick={downloadPDF}
+          disabled={isDownloading}
+          className="w-16 h-16 bg-film-gold text-black rounded-full shadow-[0_0_30px_rgba(201,168,79,0.5)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative"
+        >
+          {isDownloading ? (
+            <div className="w-6 h-6 border-3 border-black/30 border-t-black rounded-full animate-spin" />
+          ) : (
+            <Download size={24} />
+          )}
+          <span className="absolute right-full mr-4 px-3 py-1 bg-black/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10">
+            Export PDF
+          </span>
+        </button>
+      </motion.div>
     </div>
   );
 }

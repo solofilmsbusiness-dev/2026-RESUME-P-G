@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "portfolio": {
+      "title": "Portfolio",
+      "description": "Stores the cinematic portfolio assets including images and their positions.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this portfolio."
+        },
+        "assets": {
+          "type": "object",
+          "description": "A map of asset keys to their image data (url, x, y, scale)."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The last time the portfolio was updated."
+        }
+      },
+      "required": ["userId", "assets"]
+    }
+  },
+  "firestore": {
+    "/portfolios/{userId}": {
+      "schema": "portfolio",
+      "description": "User specific portfolio data."
+    }
+  }
+}
