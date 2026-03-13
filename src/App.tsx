@@ -32,6 +32,7 @@ interface AssetData {
   src: string;
   zoom: number;
   position: { x: number; y: number };
+  fit?: 'cover' | 'contain';
 }
 
 const ASSETS_INITIAL: Record<string, AssetData> = {
@@ -45,6 +46,12 @@ const ASSETS_INITIAL: Record<string, AssetData> = {
   project3: { src: "https://picsum.photos/seed/music/1280/720", zoom: 1, position: { x: 0, y: 0 } },
   project4: { src: "https://picsum.photos/seed/university/1280/720", zoom: 1, position: { x: 0, y: 0 } },
   project5: { src: "https://picsum.photos/seed/home/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery1: { src: "https://picsum.photos/seed/cinemag1/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery2: { src: "https://picsum.photos/seed/cinemag2/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery3: { src: "https://picsum.photos/seed/cinemag3/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery4: { src: "https://picsum.photos/seed/cinemag4/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery5: { src: "https://picsum.photos/seed/cinemag5/1280/720", zoom: 1, position: { x: 0, y: 0 } },
+  gallery6: { src: "https://picsum.photos/seed/cinemag6/1280/720", zoom: 1, position: { x: 0, y: 0 } },
 };
 
 const PageWrapper = ({ children, className }: { children: React.ReactNode, className?: string }) => (
@@ -87,7 +94,8 @@ const EditableImage = ({
   const safeData = {
     src: data?.src || "https://picsum.photos/seed/error/1280/720",
     zoom: data?.zoom || 1,
-    position: data?.position || { x: 0, y: 0 }
+    position: data?.position || { x: 0, y: 0 },
+    fit: data?.fit || 'cover'
   };
 
   const processFile = (file: File) => {
@@ -97,7 +105,6 @@ const EditableImage = ({
         if (event.target?.result) {
           const img = new Image();
           img.onload = () => {
-            // Cinematic Optimizer: Resize large images to max 2000px while maintaining aspect ratio
             const MAX_WIDTH = 2000;
             const MAX_HEIGHT = 2000;
             let width = img.width;
@@ -121,9 +128,8 @@ const EditableImage = ({
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              // Export as high-quality JPEG to save significant space over PNG
               const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-              onUpdate({ src: compressedDataUrl, zoom: 1, position: { x: 0, y: 0 } });
+              onUpdate({ src: compressedDataUrl, zoom: 1, position: { x: 0, y: 0 }, fit: 'cover' });
             }
           };
           img.src = event.target.result as string;
@@ -141,7 +147,7 @@ const EditableImage = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only left click
+    if (e.button !== 0) return;
     setIsDragging(true);
     setDragStart({ x: e.clientX - safeData.position.x, y: e.clientY - safeData.position.y });
     e.stopPropagation();
@@ -166,9 +172,19 @@ const EditableImage = ({
     if (file) processFile(file);
   };
 
+  const toggleFit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onUpdate({ fit: safeData.fit === 'cover' ? 'contain' : 'cover' });
+  };
+
+  const resetPosition = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onUpdate({ position: { x: 0, y: 0 }, zoom: 1 });
+  };
+
   return (
     <div 
-      className={cn("relative group overflow-hidden select-none", className, isDragging ? "cursor-grabbing" : "cursor-move")}
+      className={cn("relative group overflow-hidden select-none bg-black/20", className, isDragging ? "cursor-grabbing" : "cursor-move")}
       onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
       onDragLeave={() => setIsOver(false)}
       onDrop={handleDrop}
@@ -188,7 +204,8 @@ const EditableImage = ({
         src={safeData.src} 
         alt={alt || "Editable Image"} 
         className={cn(
-          "w-full h-full object-cover transition-transform duration-75 pointer-events-none",
+          "w-full h-full transition-transform duration-75 pointer-events-none",
+          safeData.fit === 'cover' ? "object-cover" : "object-contain",
           isOver && "opacity-50"
         )}
         style={{
@@ -207,17 +224,33 @@ const EditableImage = ({
           <p className="text-[8px] font-bold uppercase tracking-widest text-white">Drag to Pan • Drop to Replace</p>
         </div>
 
-        <div className="w-full max-w-[120px] bg-black/60 backdrop-blur-md p-2 rounded-full flex items-center gap-3 pointer-events-auto border border-white/10">
+        <div className="w-full max-w-[180px] bg-black/60 backdrop-blur-md p-2 rounded-full flex items-center gap-2 pointer-events-auto border border-white/10">
           <button 
             onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-            className="p-1 hover:text-film-gold transition-colors"
+            className="p-1.5 hover:text-film-gold transition-colors"
+            title="Upload Image"
           >
             <Layers size={14} />
           </button>
+          <button 
+            onClick={toggleFit}
+            className={cn("p-1.5 transition-colors", safeData.fit === 'contain' ? "text-film-gold" : "hover:text-film-gold")}
+            title={safeData.fit === 'cover' ? "Switch to Fit" : "Switch to Fill"}
+          >
+            <Monitor size={14} />
+          </button>
+          <button 
+            onClick={resetPosition}
+            className="p-1.5 hover:text-film-gold transition-colors"
+            title="Reset Position"
+          >
+            <Zap size={14} />
+          </button>
+          <div className="h-4 w-[1px] bg-white/20 mx-1" />
           <input 
             type="range" 
-            min="1" 
-            max="3" 
+            min="0.1" 
+            max="5" 
             step="0.01" 
             value={safeData.zoom}
             onChange={(e) => onUpdate({ zoom: parseFloat(e.target.value) })}
@@ -520,185 +553,323 @@ export default function App() {
             {/* Top Section: Brand Identity */}
             <div className="p-20 pb-10">
               <EditorialHeader title="Solo Films" subtitle="Commercial & Branded Production" number="02" />
-              <div className="mt-8 max-w-xl">
-                <p className="text-xl font-light leading-relaxed opacity-80 italic border-l-2 border-film-gold pl-8">
-                  "A national production house specializing in high-end commercial visuals, beauty, and product storytelling for global heritage brands."
-                </p>
+              <div className="mt-6 flex items-center gap-8">
+                <div className="h-[1px] w-24 bg-film-gold" />
+                <p className="text-sm font-bold uppercase tracking-[0.4em] text-white/40">Spec Campaign Showcase</p>
               </div>
             </div>
 
-            {/* Middle Section: The Work (Bento Style) */}
-            <div className="flex-1 px-20 pb-10 grid grid-cols-12 gap-6">
-              <div className="col-span-8 relative group overflow-hidden rounded-3xl border border-white/5">
+            {/* Bento Grid for Spec Campaigns */}
+            <div className="px-20 grid grid-cols-12 gap-8 flex-1 pb-12">
+              {/* Tide - The Hero Slot */}
+              <div className="col-span-12 relative group rounded-[40px] overflow-hidden border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] aspect-video">
                 <EditableImage 
-                  data={assets.project3} 
-                  onUpdate={(updates) => updateAsset('project3', updates)}
+                  data={assets.product2} 
+                  onUpdate={(updates) => updateAsset('product2', updates)}
                   className="w-full h-full"
-                  label="Solo Films Narrative"
+                  label="Tide | Spec Campaign"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-10 bg-gradient-to-t from-black/90 to-transparent">
-                  <h4 className="text-2xl font-bold uppercase tracking-tighter">Founder / Director / DP</h4>
-                  <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.3em] mt-2">National Commercial Operations</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-12 pointer-events-none">
+                  <div className="flex items-center gap-4 mb-4">
+                    <span className="bg-film-gold text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Featured</span>
+                    <div className="h-[1px] w-12 bg-white/30" />
+                  </div>
+                  <h4 className="text-5xl font-display uppercase tracking-tighter text-white">Tide Pods</h4>
+                  <p className="text-film-gold text-sm font-bold uppercase tracking-[0.5em] mt-3">Macro • Micro Color • Product Cinematography</p>
                 </div>
               </div>
               
-              <div className="col-span-4 flex flex-col gap-6">
-                <div className="flex-1 relative rounded-3xl overflow-hidden border border-white/5">
-                  <EditableImage 
-                    data={assets.product1} 
-                    onUpdate={(updates) => updateAsset('product1', updates)}
-                    className="w-full h-full"
-                    label="Olay Beauty"
-                  />
+              {/* Olay & Febreze - Secondary Bento Slots */}
+              <div className="col-span-6 relative group rounded-[32px] overflow-hidden border border-white/10 shadow-2xl aspect-video">
+                <EditableImage 
+                  data={assets.product1} 
+                  onUpdate={(updates) => updateAsset('product1', updates)}
+                  className="w-full h-full"
+                  label="Olay | Spec Campaign"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-8 pointer-events-none">
+                  <h4 className="text-2xl font-display uppercase tracking-tighter text-white">Olay Beauty</h4>
+                  <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Skin Narrative • Texture</p>
                 </div>
-                <div className="flex-1 relative rounded-3xl overflow-hidden border border-white/5">
-                  <EditableImage 
-                    data={assets.product2} 
-                    onUpdate={(updates) => updateAsset('product2', updates)}
-                    className="w-full h-full"
-                    label="Tide Commercial"
-                  />
+              </div>
+
+              <div className="col-span-6 relative group rounded-[32px] overflow-hidden border border-white/10 shadow-2xl aspect-video">
+                <EditableImage 
+                  data={assets.product3} 
+                  onUpdate={(updates) => updateAsset('product3', updates)}
+                  className="w-full h-full"
+                  label="Febreze | Spec Campaign"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-8 pointer-events-none">
+                  <h4 className="text-2xl font-display uppercase tracking-tighter text-white">Febreze</h4>
+                  <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Atmospheric Branded Content</p>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Section: Client List & Detail */}
-            <div className="px-20 pb-20 grid grid-cols-3 gap-12">
-              <div className="col-span-2">
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="h-[1px] flex-1 bg-white/10" />
-                  <span className="text-[10px] uppercase tracking-[0.5em] text-film-gold font-bold">Production Reach</span>
-                  <div className="h-[1px] flex-1 bg-white/10" />
-                </div>
-                <div className="grid grid-cols-4 gap-4 opacity-40 text-[9px] uppercase tracking-widest font-bold text-center">
-                  <span>Los Angeles</span>
-                  <span>Atlanta</span>
-                  <span>New York</span>
-                  <span>Chicago</span>
-                </div>
-              </div>
-              <div className="flex flex-col justify-end">
-                <p className="text-[10px] font-light opacity-50 leading-relaxed text-right">
-                  Directing cinematic productions for global brands including P&G, Olay, Febreze, and Dawn.
+            {/* Bottom Section: Client Detail */}
+            <div className="px-20 pb-16 flex justify-between items-end">
+              <div className="max-w-md">
+                <p className="text-xs font-light opacity-50 leading-relaxed italic">
+                  "Directing cinematic productions for global brands including P&G, Olay, Febreze, and Dawn. Specialized in high-speed tabletop and beauty cinematography."
                 </p>
               </div>
-            </div>
-
-            <div className="mt-auto py-8 px-20 border-t border-white/5 flex justify-between items-center opacity-30">
-              <p className="text-[10px] tracking-widest uppercase">Cameron Johnson | Solo Films</p>
-              <p className="text-[10px] tracking-widest uppercase">Section 02</p>
+              <div className="text-right">
+                <p className="text-[10px] tracking-[0.5em] uppercase text-film-gold font-bold mb-2">Solo Films</p>
+                <p className="text-[9px] tracking-widest uppercase opacity-30">Production House | Section 02</p>
+              </div>
             </div>
           </div>
         </PageWrapper>
 
         {/* PAGE 4: TECHNICAL TOOLKIT & ACHIEVEMENTS */}
         <PageWrapper>
-          <div className="flex flex-col h-full bg-[#080808]">
+          <div className="flex flex-col h-full bg-[#0a0a0a]">
             <div className="p-20 pb-10">
-              <EditorialHeader title="Portfolio" subtitle="Technical Specs & Industry Recognition" number="03" />
+              <EditorialHeader title="Technical" subtitle="Toolkit & Industry Recognition" number="03" />
             </div>
 
-            {/* Technical Spec Grid */}
-            <div className="px-20 grid grid-cols-12 gap-12 flex-1">
-              {/* Left Column: Visuals */}
+            <div className="px-20 grid grid-cols-12 gap-12 flex-1 pb-12">
+              {/* Left Side: The Hardware Dashboard */}
+              <div className="col-span-7 flex flex-col gap-8">
+                <div className="bg-[#151619] rounded-[40px] p-12 border border-white/5 shadow-2xl relative overflow-hidden flex-1">
+                  <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+                    <Monitor size={240} />
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mb-12">
+                    <div className="w-2 h-2 rounded-full bg-film-gold animate-pulse" />
+                    <h4 className="text-xs font-mono uppercase tracking-[0.4em] text-film-gold">System Configuration</h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-16">
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">01. Cinema Systems</p>
+                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
+                        <li>RED Komodo X [6K]</li>
+                        <li>ARRI Alexa Mini LF</li>
+                        <li>Sony FX9 / FX6</li>
+                        <li>DJI Inspire 3 [8K]</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">02. Optics & Light</p>
+                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
+                        <li>Steadicam / RS4 Pro</li>
+                        <li>Teradek Bolt 6</li>
+                        <li>Aputure 600D / 300D</li>
+                        <li>Nanlite Forza Series</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">03. Post Pipeline</p>
+                      <ul className="text-sm font-light space-y-2 opacity-80 leading-relaxed">
+                        <li>DaVinci Resolve [Color]</li>
+                        <li>Premiere Pro [Edit]</li>
+                        <li>After Effects [VFX]</li>
+                        <li>Blender [3D]</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 border-b border-white/10 pb-2">04. Education</p>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-tight">Art Academy of Cincinnati</p>
+                          <p className="text-[9px] opacity-40 uppercase">Digital Media Studies</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-tight">University of Cincinnati</p>
+                          <p className="text-[9px] opacity-40 uppercase">Digital Media & Production</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side: Achievements & Visual */}
               <div className="col-span-5 flex flex-col gap-8">
-                <div className="aspect-[4/5] relative rounded-[40px] overflow-hidden border border-white/10">
+                <div className="flex-1 relative rounded-[40px] overflow-hidden border border-white/10 group">
                   <EditableImage 
                     data={assets.project1} 
                     onUpdate={(updates) => updateAsset('project1', updates)}
                     className="w-full h-full"
-                    label="Black Music Walk of Fame"
+                    label="Portfolio Highlight"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-10">
+                    <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-2">Technical Execution</p>
+                    <h4 className="text-2xl font-display uppercase tracking-tighter text-white">Steadicam Operation | RED Komodo X</h4>
+                  </div>
                 </div>
-                <div className="bg-white/5 p-8 rounded-3xl border border-white/10">
-                  <h4 className="text-xs font-bold uppercase tracking-[0.3em] text-film-gold mb-6 flex items-center gap-2">
-                    <Award size={14} /> Key Achievements
+
+                <div className="bg-white/5 rounded-[32px] p-8 border border-white/10">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-film-gold mb-6 flex items-center gap-3">
+                    <Award size={14} /> Recognition
                   </h4>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                      <span className="text-[11px] font-bold uppercase tracking-tight">Best iPhone Film</span>
-                      <span className="text-[8px] opacity-40 uppercase">UPAA Winner</span>
-                    </div>
-                    <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                      <span className="text-[11px] font-bold uppercase tracking-tight">Hoodtorial University</span>
-                      <span className="text-[8px] opacity-40 uppercase">25K Platform</span>
-                    </div>
-                    <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                      <span className="text-[11px] font-bold uppercase tracking-tight">Music Walk of Fame</span>
-                      <span className="text-[8px] opacity-40 uppercase">Archived (CPL)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Toolkit & Education */}
-              <div className="col-span-7 flex flex-col gap-12">
-                {/* Toolkit - Technical Dashboard Style */}
-                <div className="bg-white/5 p-10 rounded-[40px] border border-white/10 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-6 opacity-10">
-                    <Monitor size={80} />
-                  </div>
-                  <h4 className="text-xl font-display uppercase tracking-widest text-film-gold mb-10">Technical Toolkit</h4>
-                  
-                  <div className="space-y-10">
-                    <div className="relative pl-6 border-l border-film-gold/30">
-                      <p className="text-[9px] uppercase tracking-[0.4em] text-white/40 mb-3">Cinema Systems</p>
-                      <p className="text-sm font-light leading-relaxed opacity-90">
-                        RED Komodo X • ARRI Alexa Mini LF • Sony FX9/FX6 • DJI Inspire 3 • Canon C500 Mk II
-                      </p>
-                    </div>
-                    
-                    <div className="relative pl-6 border-l border-film-gold/30">
-                      <p className="text-[9px] uppercase tracking-[0.4em] text-white/40 mb-3">Optics & Light</p>
-                      <p className="text-sm font-light leading-relaxed opacity-90">
-                        Steadicam • RS4 Pro • Teradek Bolt 6 • Aputure 600D/300D • Nanlite Forza • Tabletop Rigs
-                      </p>
-                    </div>
-
-                    <div className="relative pl-6 border-l border-film-gold/30">
-                      <p className="text-[9px] uppercase tracking-[0.4em] text-white/40 mb-3">Post Pipeline</p>
-                      <p className="text-sm font-light leading-relaxed opacity-90">
-                        DaVinci Resolve • Premiere Pro • After Effects • Blender • AI-assisted Workflows
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Education */}
-                <div className="pl-10">
-                  <h4 className="text-xs font-bold uppercase tracking-[0.3em] text-film-gold mb-8 flex items-center gap-2">
-                    <Layers size={14} /> Academic Foundation
-                  </h4>
-                  <div className="grid grid-cols-1 gap-8">
-                    <div className="flex gap-6 items-start">
-                      <div className="w-1 h-1 rounded-full bg-film-gold mt-2" />
-                      <div>
-                        <p className="text-sm font-bold uppercase tracking-tight">Art Academy of Cincinnati</p>
-                        <p className="text-[10px] opacity-40 uppercase tracking-widest">Digital Media Studies</p>
+                    {[
+                      { title: "Best iPhone Film", org: "UPAA Winner" },
+                      { title: "Hoodtorial University", org: "25K Platform" },
+                      { title: "Music Walk of Fame", org: "Archived (CPL)" }
+                    ].map((item, i) => (
+                      <div key={i} className="flex justify-between items-center group cursor-default">
+                        <span className="text-xs font-medium uppercase tracking-tight group-hover:text-film-gold transition-colors">{item.title}</span>
+                        <div className="h-[1px] flex-1 mx-4 bg-white/5" />
+                        <span className="text-[9px] opacity-30 uppercase font-mono">{item.org}</span>
                       </div>
-                    </div>
-                    <div className="flex gap-6 items-start">
-                      <div className="w-1 h-1 rounded-full bg-film-gold mt-2" />
-                      <div>
-                        <p className="text-sm font-bold uppercase tracking-tight">University of Cincinnati</p>
-                        <p className="text-[10px] opacity-40 uppercase tracking-widest">Digital Media & Production</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-auto py-12 px-20 border-t border-white/5 flex justify-between items-center opacity-30">
-              <div className="flex items-center gap-6">
-                <Instagram size={14} />
-                <span className="text-[10px] tracking-widest uppercase">@Bangoutfilms</span>
+            <div className="mt-auto py-10 px-20 border-t border-white/5 flex justify-between items-center">
+              <div className="flex items-center gap-8">
+                <div className="flex items-center gap-3 opacity-40">
+                  <Instagram size={14} />
+                  <span className="text-[10px] tracking-[0.4em] uppercase font-bold">@Bangoutfilms</span>
+                </div>
+                <div className="h-4 w-[1px] bg-white/10" />
+                <p className="text-[10px] tracking-[0.4em] uppercase text-white/20 font-bold">Technical Specs | Section 03</p>
               </div>
-              <p className="text-[10px] tracking-widest uppercase">Section 03</p>
+              <div className="flex gap-2">
+                {[1, 2, 3].map(i => <div key={i} className="w-1 h-1 rounded-full bg-film-gold/40" />)}
+              </div>
             </div>
           </div>
         </PageWrapper>
 
+        {/* PAGE 5: CINEMATIC GALLERY */}
+        <PageWrapper>
+          <div className="flex flex-col h-full bg-[#080808] overflow-hidden">
+            <div className="px-20 pt-16 pb-8 flex justify-between items-end">
+              <EditorialHeader title="Gallery" subtitle="Visual Narrative & Frame Studies" number="04" />
+              <div className="text-right pb-2">
+                <p className="text-[10px] tracking-[0.6em] uppercase text-film-gold font-bold">Frame Studies</p>
+                <p className="text-[8px] tracking-widest uppercase opacity-30 mt-1">Cinematic Composition</p>
+              </div>
+            </div>
+
+            {/* 16:9 Editorial Grid */}
+            <div className="px-20 flex-1 flex flex-col gap-6 pb-12">
+              {/* Large Hero Image Section */}
+              <div className="space-y-4">
+                <div className="relative rounded-[32px] overflow-hidden border border-white/5 shadow-2xl group aspect-video mx-auto w-[90%]">
+                  <EditableImage 
+                    data={assets.gallery1} 
+                    onUpdate={(updates) => updateAsset('gallery1', updates)}
+                    className="w-full h-full"
+                    label="Hero Frame Study"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute bottom-0 left-0 right-0 p-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="flex items-center gap-4 mb-3">
+                      <span className="bg-film-gold text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Lead Narrative</span>
+                      <div className="h-[1px] w-12 bg-white/30" />
+                    </div>
+                    <h4 className="text-4xl font-display uppercase tracking-tighter text-white">Olay Beauty</h4>
+                    <p className="text-film-gold text-[10px] font-bold uppercase tracking-[0.5em] mt-2">Product Cinematography • Texture • Form</p>
+                  </div>
+                </div>
+                <div className="px-10 text-center">
+                  <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-1">OLAY — SPEC CAMPAIGN</p>
+                  <p className="text-[9px] font-light leading-relaxed opacity-60 max-w-xl mx-auto">
+                    Beauty & personal care product cinematography. Controlled ambient lighting highlighting product texture, color, and form.
+                  </p>
+                </div>
+              </div>
+
+              {/* 2x2 Grid Below */}
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                {/* Swine City */}
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border border-white/5 shadow-xl group aspect-video">
+                    <EditableImage 
+                      data={assets.gallery2} 
+                      onUpdate={(updates) => updateAsset('gallery2', updates)}
+                      className="w-full h-full"
+                      label="Swine City Brewing Co."
+                    />
+                  </div>
+                  <div className="px-1">
+                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Swine City Brewing Co.</p>
+                    <p className="text-[8px] font-light leading-tight opacity-60">
+                      Lifestyle Campaign — On-location cinematography. Shallow depth of field, natural autumn light, product-forward composition.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Urban League */}
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border border-white/5 shadow-xl group aspect-video">
+                    <EditableImage 
+                      data={assets.gallery3} 
+                      onUpdate={(updates) => updateAsset('gallery3', updates)}
+                      className="w-full h-full"
+                      label="Urban League × P&G"
+                    />
+                  </div>
+                  <div className="px-1">
+                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Urban League × P&G</p>
+                    <p className="text-[8px] font-light leading-tight opacity-60">
+                      Juneteenth Campaign Series — On-location community brand storytelling. Natural light, urban environment, human-centered narrative.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cincinnati Black Music Walk of Fame */}
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border border-white/5 shadow-xl group aspect-video">
+                    <EditableImage 
+                      data={assets.gallery4} 
+                      onUpdate={(updates) => updateAsset('gallery4', updates)}
+                      className="w-full h-full"
+                      label="Black Music Walk of Fame"
+                    />
+                  </div>
+                  <div className="px-1">
+                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Cincinnati Black Music Walk of Fame Documentary</p>
+                    <p className="text-[8px] font-light leading-tight opacity-60">
+                      Feat. Damon Jones, Chief Marketing Officer, Procter & Gamble • Directed by Cameron Johnson Archived by the Cincinnati Public Library.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Febreze Auto */}
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border border-white/5 shadow-xl group aspect-video">
+                    <EditableImage 
+                      data={assets.gallery5} 
+                      onUpdate={(updates) => updateAsset('gallery5', updates)}
+                      className="w-full h-full"
+                      label="Febreze Auto | Spec Commercial"
+                    />
+                  </div>
+                  <div className="px-1">
+                    <p className="text-[10px] font-bold text-film-gold uppercase tracking-widest mb-0.5">Febreze Auto — Spec Commercial</p>
+                    <p className="text-[8px] font-light leading-tight opacity-60">
+                      In-vehicle cinematography using practical ambient lighting — dashboard glow, mixed color temperatures — for a cinematic product moment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-auto py-8 px-20 border-t border-white/5 flex justify-between items-center opacity-30">
+              <p className="text-[10px] tracking-widest uppercase">Visual Narrative | Gallery</p>
+              <div className="flex gap-4">
+                <span className="text-[10px] tracking-widest uppercase">04 / 04</span>
+              </div>
+            </div>
+          </div>
+        </PageWrapper>
       </div>
 
       {/* Footer Info */}
