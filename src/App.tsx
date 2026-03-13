@@ -15,7 +15,8 @@ import {
   Monitor,
   Zap,
   ExternalLink,
-  Menu
+  Menu,
+  Printer
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import html2canvas from 'html2canvas';
@@ -357,48 +358,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] py-12 px-4 flex flex-col items-center font-sans text-white/90 selection:bg-film-gold selection:text-black">
-      {/* Controls */}
-      <motion.div 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="fixed top-6 right-6 z-50 flex flex-col items-end gap-3"
-      >
-        <div className="flex gap-4">
-          <button
-            onClick={resetAssets}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-full font-bold transition-all backdrop-blur-md border border-white/10 cursor-pointer"
-          >
-            Reset Images
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-full font-bold transition-all backdrop-blur-md border border-white/10 cursor-pointer"
-          >
-            Print Portfolio
-          </button>
-          <button
-            onClick={downloadPDF}
-            disabled={isDownloading}
-            className="flex items-center gap-2 bg-film-gold hover:scale-105 active:scale-95 text-black px-8 py-4 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(201,168,79,0.4)] disabled:opacity-50 cursor-pointer"
-          >
-            {isDownloading ? (
-              <span className="animate-pulse flex items-center gap-2">
-                <Zap size={18} className="animate-bounce" />
-                Processing...
-              </span>
-            ) : (
-              <>
-                <Download size={20} />
-                Export PDF
-              </>
-            )}
-          </button>
-        </div>
-        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold mr-4">
-          Optimized for A4 Print & Digital Distribution
-        </p>
-      </motion.div>
-
       {/* Resume Container */}
       <div ref={resumeRef} className="flex flex-col gap-16">
         
@@ -1009,6 +968,70 @@ export default function App() {
             </div>
           </div>
         </PageWrapper>
+      </div>
+
+      {/* Floating Controls */}
+      <div className="fixed bottom-8 right-8 z-[100] flex flex-col gap-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-3"
+        >
+          <button
+            onClick={downloadPDF}
+            disabled={isDownloading}
+            className={cn(
+              "group flex items-center gap-3 px-6 py-3 bg-film-gold text-black rounded-full font-bold uppercase text-[10px] tracking-[0.2em] shadow-[0_0_20px_rgba(201,168,79,0.3)] hover:shadow-[0_0_30px_rgba(201,168,79,0.5)] transition-all duration-300",
+              isDownloading && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {isDownloading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                Download PDF
+              </>
+            )}
+          </button>
+
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => window.print()}
+              className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white/60 hover:text-white transition-all duration-300 backdrop-blur-md"
+              title="Print Portfolio"
+            >
+              <Printer size={18} />
+            </button>
+            <button
+              onClick={() => window.open(window.location.href, '_blank')}
+              className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white/60 hover:text-white transition-all duration-300 backdrop-blur-md"
+              title="Open in New Tab"
+            >
+              <ExternalLink size={18} />
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+              }}
+              className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white/60 hover:text-white transition-all duration-300 backdrop-blur-md"
+              title="Copy Share Link"
+            >
+              <Globe size={18} />
+            </button>
+            <button
+              onClick={resetAssets}
+              className="p-3 bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/30 rounded-full text-white/40 hover:text-red-400 transition-all duration-300 backdrop-blur-md"
+              title="Reset All Images"
+            >
+              <Zap size={18} />
+            </button>
+          </div>
+        </motion.div>
       </div>
 
       {/* Footer Info */}
